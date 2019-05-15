@@ -3,7 +3,7 @@
 #include <vector>
 
 
-	template<class T>
+template<class T>
 struct AVL
 {
 	T Value;
@@ -25,6 +25,7 @@ struct AVL
 		Parent = avl.Parent;
 	}
 };
+
 template<class T, class Compare = std::less<T>>
 class BST
 {
