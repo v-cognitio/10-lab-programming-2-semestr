@@ -151,7 +151,6 @@ public:
 				current = position->LeftChild;
 			else
 				current = position->RightChild;
-
 			RemovingNode(current);
 		}
 	}
@@ -177,9 +176,36 @@ public:
 				current->Parent->RightChild = nullptr;
 			delete current;
 		}
+		else if (current->LeftChild && current->RightChild)
+		{
+			AVL<T> *swapNode = FindMaximum(current);
+			Swap(current, swapNode);
+			RemovingNode(swapNode);
+		}
+		else if (current->RightChild)
+		{
+			if (IsItLeftChild(current, current->Parent))
+			{
+				current->Parent->LeftChild = current->RightChild;
+			}
+			else
+			{
+				current->Parent->RightChild = current->RightChild;
+			}
+			current->RightChild->Parent = current->Parent;
+		}
 		else
-			Swap(current, FindMaximum(current));
-		Remove(current->Value);
+		{
+			if (IsItLeftChild(current, current->Parent))
+			{
+				current->Parent->LeftChild = current->LeftChild;
+			}
+			else
+			{
+				current->Parent->RightChild = current->LeftChild;
+			}
+			current->LeftChild->Parent = current->Parent;
+		}
 	}
 
 	AVL<T>* FindParentPosition(AVL<T> *node , AVL<T> *prevNode, const T &val)
@@ -194,8 +220,10 @@ public:
 
 	AVL<T>* FindMaximum(AVL<T> *node)
 	{
-		if(node->LeftChild)
+		if (node->LeftChild)
 			node = node->LeftChild;
+		else
+			return node = node->RightChild;
 		while (node->RightChild != nullptr)
 		{
 			node = node->RightChild;
@@ -272,6 +300,12 @@ int main()
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());*/
 	bst.Remove(7);
+	std::cout << "!!!!\r\n";
+	bst.ShowTree(bst.GetRoot());
+	bst.Remove(10);
+	std::cout << "!!!!\r\n";
+	bst.ShowTree(bst.GetRoot());
+	bst.Remove(0);
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
 }
