@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 
-
 template<class T>
 struct AVL
 {
@@ -41,7 +40,7 @@ struct AVL
 		}
 		LeftChild = avl.LeftChild;
 		RightChild = avl.RightChild;
-		//maybe avl should be deleted after that 
+		delete avl;
 		return *this;
 	}
 
@@ -137,7 +136,7 @@ public:
 		AddNode(newNode);
 	}
 
-	void Remove(const T &val)// Не работает
+	void Remove(const T &val)
 	{
 		AVL<T> *position = FindParentPosition(root, root, val);
 		if (position == root && position->Value == val)
@@ -295,6 +294,54 @@ public:
 	AVL<T>* GetRoot()
 	{
 		return root;
+	}
+};
+
+template<class T>
+class iterator
+{
+	friend class BST<T>;
+public:
+	BST<T> *bst;
+	iterator(BST<T> *bstTree)
+	{
+		bst = bstTree;
+	}
+	iterator begin()
+	{
+
+	}
+	iterator end()
+	{
+
+	}
+	iterator operator++()
+	{
+
+	}
+	iterator operator++(T)
+	{
+
+	}
+	iterator operator--()
+	{
+
+	}
+	iterator operator--(T)
+	{
+
+	}
+	T operator*()
+	{
+
+	}
+	bool operator==(const iterator &iter2)
+	{
+
+	}
+	bool operator!=(const iterator &iter2)
+	{
+
 	}
 };
 
