@@ -160,10 +160,21 @@ public:
 		if (!root->LeftChild && !root->RightChild)
 			throw new std::exception;
 		if (!root->LeftChild)
+		{
+			root->RightChild->Parent = nullptr;
 			root = root->RightChild;
-		AVL<T> *newRoot = FindMaximum(root);
-		Swap(root, newRoot);
-		root = newRoot;
+		}
+		else if(!root->RightChild)
+		{
+			root->LeftChild->Parent = nullptr;
+			root = root->LeftChild;
+		}
+		else
+		{
+			AVL<T> *newRoot = FindMaximum(root);
+			Swap(root, newRoot);
+			RemovingNode(newRoot);
+		}
 	}
 
 	void RemovingNode(AVL<T> *current)
@@ -293,12 +304,18 @@ int main()
 	std::vector<int> vect = { 1, 7, 6, 0, 10, 3 };
 	bst.Assign(vect.begin(), vect.end());
 	bst.ShowTree(bst.GetRoot());
+	bst.Remove(bst.GetRoot()->Value);
+	std::cout << "!!!!\r\n";
+	bst.ShowTree(bst.GetRoot());
+	bst.Remove(bst.GetRoot()->Value);
+	std::cout << "!!!!\r\n";
+	bst.ShowTree(bst.GetRoot());
 	/*bst.Remove(6);
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
 	bst.Remove(3);
 	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());*/
+	bst.ShowTree(bst.GetRoot());
 	bst.Remove(7);
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
@@ -308,4 +325,7 @@ int main()
 	bst.Remove(0);
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
+	bst.Remove(bst.GetRoot()->Value);
+	std::cout << "!!!!\r\n";
+	bst.ShowTree(bst.GetRoot());*/
 }
