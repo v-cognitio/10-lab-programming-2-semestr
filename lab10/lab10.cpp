@@ -3,13 +3,14 @@
 #include <vector>
 
 
-	template<class T>
+template<class T>
 struct AVL
 {
 	T Value;
 	AVL *LeftChild;
 	AVL *RightChild;
 	AVL *Parent;
+
 	AVL(AVL<T> *LChild, AVL<T> *RChild, AVL<T> *Par, T val)
 	{
 		LeftChild = LChild;
@@ -17,6 +18,7 @@ struct AVL
 		Parent = Par;
 		Value = val;
 	}
+
 	AVL(const AVL &avl)
 	{
 		LeftChild = avl.LeftChild;
@@ -24,7 +26,27 @@ struct AVL
 		Value = avl.Value;
 		Parent = avl.Parent;
 	}
+
+	AVL& operator=(const AVL &avl)
+	{
+		Parent = avl.Parent;
+		Value = avl.Value;
+		if (Parent->LeftChild == &avl)
+		{
+			Parent->LeftChild = this;
+		}
+		else
+		{
+			Parent->RightChild = this;
+		}
+		LeftChild = avl.LeftChild;
+		RightChild = avl.RightChild;
+		//maybe avl should be deleted after that 
+		return *this;
+	}
+
 };
+
 template<class T, class Compare = std::less<T>>
 class BST
 {
@@ -183,7 +205,9 @@ public:
 
 	void Swap(AVL<T> *first, AVL<T> *second)
 	{
-		//...
+		T temp = first->Value;
+		first->Value = second->Value;
+		second->Value = temp;
 	}
 
 	bool FindNode(const T &val)
