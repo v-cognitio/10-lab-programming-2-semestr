@@ -204,6 +204,36 @@ public:
 		}
 	}
 
+	void SmallLeftRotate(AVL<T> *node)
+	{
+		AVL<T> *helpNode = node->RightChild;
+		node->RightChild = helpNode->LeftChild;
+		helpNode->LeftChild = node;
+		RecountHeights(node);
+		RecountHeights(helpNode);
+	}
+
+	void SmallRightRotate(AVL<T> *node)
+	{
+		AVL<T> *helpNode = node->LeftChild;
+		node->LeftChild = helpNode->RightChild;
+		helpNode->RightChild = node;
+		RecountHeights(node);
+		RecountHeights(helpNode);
+	}
+
+	void BigRightRotate(AVL<T> *node)
+	{
+		SmallLeftRotate(node->LeftChild);
+		SmallRightRotate(node);
+	}
+
+	void BigLeftRotate(AVL<T> *node)
+	{
+		SmallRightRotate(node->RightChild);
+		SmallLeftRotate(node);
+	}
+
 	void RemovingNode(AVL<T> *current)
 	{
 		if (!current->LeftChild && !current->RightChild)
