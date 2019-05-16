@@ -10,8 +10,7 @@ struct AVL
 	AVL *LeftChild;
 	AVL *RightChild;
 	AVL *Parent;
-	int leftHeight;
-	int rightHeight;
+	int Height;
 
 	AVL(AVL<T> *LChild, AVL<T> *RChild, AVL<T> *Par, T val)
 	{
@@ -19,8 +18,7 @@ struct AVL
 		RightChild = RChild;
 		Parent = Par;
 		Value = val;
-		leftHeight = 0;
-		rightHeight = 0;
+		Height = 0;
 	}
 
 	AVL(const AVL &avl)
@@ -29,6 +27,7 @@ struct AVL
 		RightChild = avl.RightChild;
 		Value = avl.Value;
 		Parent = avl.Parent;
+		Height = avl.Height;
 	}
 
 	AVL& operator=(const AVL &avl)
@@ -45,6 +44,7 @@ struct AVL
 		}
 		LeftChild = avl.LeftChild;
 		RightChild = avl.RightChild;
+		Height = avl.Height;
 		delete avl;
 		return *this;
 	}
@@ -126,8 +126,7 @@ public:
 		root = new AVL<T>(nullptr, nullptr, nullptr, val);
 		nodeCount++;
 		dataSize++;
-		root->leftHeight = 0;
-		root->rightHeight = 0;
+		root->Height = 0;
 		return;
 	}
 
@@ -141,27 +140,18 @@ public:
 			parent->LeftChild = newNode;
 
 		AddNode(newNode);
-		if (IsItLeftChild(newNode, newNode->Parent))
-		{
-			newNode->Parent->leftHeight++;
-		}
-		else
-		{
-			newNode->Parent->rightHeight++;
-		}
-
 		RecountHeights(newNode->Parent);
 	}
 
-	void RecountHeights(AVL<T> *newNode)
+	void RecountHeights(AVL<T> *node)
 	{
-		if (newNode == root)
+		if (!node)
 			return;
-		if (IsItLeftChild(newNode, newNode->Parent))
-			newNode->Parent->leftHeight = std::max(newNode->Parent->leftHeight, std::max(newNode->leftHeight, newNode->rightHeight) + 1);
+		if (!node->LeftChild && !node->RightChild)
+			node->Height = 0;
 		else
-			newNode->Parent->rightHeight = std::max(newNode->Parent->rightHeight, std::max(newNode->leftHeight, newNode->rightHeight) + 1);
-		RecountHeights(newNode->Parent);
+			node->Height = std::max(node->LeftChild ? node->LeftChild->Height : 0, node->RightChild ? node->RightChild->Height : 0) + 1;
+		RecountHeights(node->Parent);
 	}
 
 	void Remove(const T &val)
@@ -190,11 +180,13 @@ public:
 		{
 			root->RightChild->Parent = nullptr;
 			root = root->RightChild;
+			RecountHeights(root);
 		}
 		else if(!root->RightChild)
 		{
 			root->LeftChild->Parent = nullptr;
 			root = root->LeftChild;
+			RecountHeights(root);
 		}
 		else
 		{
@@ -202,6 +194,18 @@ public:
 			Swap(root, newRoot);
 			RemovingNode(newRoot);
 		}
+	}
+
+	void CheckTreeCorrectness()
+	{
+		GetHeightDifference(root);
+	}
+
+	int GetHeightDifference(AVL<T> *node)
+	{
+		if (!node)
+			return 0;
+		return (root->RightChild ? root->RightChild->Height : 0) - (root->LeftChild ? root->LeftChild->Height : 0);
 	}
 
 	void SmallLeftRotate(AVL<T> *node)
@@ -242,6 +246,7 @@ public:
 				current->Parent->LeftChild = nullptr;
 			else
 				current->Parent->RightChild = nullptr;
+			RecountHeights(current->Parent);
 			delete current;
 		}
 		else if (current->LeftChild && current->RightChild)
@@ -261,6 +266,7 @@ public:
 				current->Parent->RightChild = current->RightChild;
 			}
 			current->RightChild->Parent = current->Parent;
+			RecountHeights(current->Parent);
 		}
 		else
 		{
@@ -272,6 +278,7 @@ public:
 			{
 				current->Parent->RightChild = current->LeftChild;
 			}
+			RecountHeights(current->Parent);
 			current->LeftChild->Parent = current->Parent;
 		}
 	}
@@ -343,7 +350,7 @@ public:
 	{
 		if (node != nullptr)
 		{
-			std::cout << node->Value << " Left : " << node->leftHeight << " Right : " << node->rightHeight << std::endl;
+			std::cout << node->Value << " Height : " << node->Height << std::endl;
 			ShowTree(node->LeftChild);
 			ShowTree(node->RightChild);
 		}
@@ -412,7 +419,7 @@ int main()
 	bst.Remove(bst.GetRoot()->Value);
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
-	bst.Remove(bst.GetRoot()->Value);
+	bst.Remove(3);
 	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
 	/*bst.Remove(6);
