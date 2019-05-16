@@ -1,6 +1,7 @@
 #include "pch.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 template<class T>
 struct AVL
@@ -9,6 +10,8 @@ struct AVL
 	AVL *LeftChild;
 	AVL *RightChild;
 	AVL *Parent;
+	int leftHeight;
+	int rightHeight;
 
 	AVL(AVL<T> *LChild, AVL<T> *RChild, AVL<T> *Par, T val)
 	{
@@ -16,6 +19,8 @@ struct AVL
 		RightChild = RChild;
 		Parent = Par;
 		Value = val;
+		leftHeight = 0;
+		rightHeight = 0;
 	}
 
 	AVL(const AVL &avl)
@@ -65,7 +70,7 @@ public:
 		treeData[1] = nullptr;
 	}
 
-	BST(const BST &) : BST()
+	BST(const BST &otherBst) : BST()
 	{
 
 	}
@@ -121,6 +126,8 @@ public:
 		root = new AVL<T>(nullptr, nullptr, nullptr, val);
 		nodeCount++;
 		dataSize++;
+		root->leftHeight = 0;
+		root->rightHeight = 0;
 		return;
 	}
 
@@ -134,6 +141,27 @@ public:
 			parent->LeftChild = newNode;
 
 		AddNode(newNode);
+		if (IsItLeftChild(newNode, newNode->Parent))
+		{
+			newNode->Parent->leftHeight++;
+		}
+		else
+		{
+			newNode->Parent->rightHeight++;
+		}
+
+		RecountHeights(newNode->Parent);
+	}
+
+	void RecountHeights(AVL<T> *newNode)
+	{
+		if (newNode == root)
+			return;
+		if (IsItLeftChild(newNode, newNode->Parent))
+			newNode->Parent->leftHeight = std::max(newNode->Parent->leftHeight, std::max(newNode->leftHeight, newNode->rightHeight) + 1);
+		else
+			newNode->Parent->rightHeight = std::max(newNode->Parent->rightHeight, std::max(newNode->leftHeight, newNode->rightHeight) + 1);
+		RecountHeights(newNode->Parent);
 	}
 
 	void Remove(const T &val)
@@ -285,7 +313,7 @@ public:
 	{
 		if (node != nullptr)
 		{
-			std::cout << node->Value << std::endl;
+			std::cout << node->Value << " Left : " << node->leftHeight << " Right : " << node->rightHeight << std::endl;
 			ShowTree(node->LeftChild);
 			ShowTree(node->RightChild);
 		}
