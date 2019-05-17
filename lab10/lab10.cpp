@@ -18,7 +18,7 @@ struct AVL
 		RightChild = RChild;
 		Parent = Par;
 		Value = val;
-		Height = 0;
+		Height = 1;
 	}
 
 	AVL(const AVL &avl)
@@ -126,7 +126,6 @@ public:
 		root = new AVL<T>(nullptr, nullptr, nullptr, val);
 		nodeCount++;
 		dataSize++;
-		root->Height = 0;
 		return;
 	}
 
@@ -141,6 +140,7 @@ public:
 
 		AddNode(newNode);
 		RecountHeights(newNode->Parent);
+		CheckTreeCorrectness(newNode->Parent);
 	}
 
 	void RecountHeights(AVL<T> *node)
@@ -148,7 +148,7 @@ public:
 		if (!node)
 			return;
 		if (!node->LeftChild && !node->RightChild)
-			node->Height = 0;
+			node->Height = 1;
 		else
 			node->Height = std::max(node->LeftChild ? node->LeftChild->Height : 0, node->RightChild ? node->RightChild->Height : 0) + 1;
 		RecountHeights(node->Parent);
@@ -194,36 +194,75 @@ public:
 			Swap(root, newRoot);
 			RemovingNode(newRoot);
 		}
+		
 	}
 
-	void CheckTreeCorrectness()
+	void CheckTreeCorrectness(AVL<T> *node)
 	{
-		GetHeightDifference(root);
+		if (!node)
+			return;
+		RecountHeights(node);
+		int heightDiff = GetHeightDifference(node);
+
+		if (std::abs(heightDiff) > 1)
+		{
+			if (heightDiff > 0)
+			{
+				if (GetHeightDifference(root->RightChild) == -1)
+				{
+					BigLeftRotate(root);
+				}
+				else
+				{
+					SmallLeftRotate(root);
+				}
+			}
+			else
+			{
+				if (GetHeightDifference(root->LeftChild) == 1)
+				{
+					BigRightRotate(root);
+				}
+				else
+				{
+					SmallRightRotate(root);
+				}
+			}
+			return;
+		}
+		CheckTreeCorrectness(node->Parent);
 	}
 
 	int GetHeightDifference(AVL<T> *node)
 	{
 		if (!node)
 			return 0;
-		return (root->RightChild ? root->RightChild->Height : 0) - (root->LeftChild ? root->LeftChild->Height : 0);
+		return (node->RightChild ? node->RightChild->Height : 0) - (node->LeftChild ? node->LeftChild->Height : 0);
 	}
 
-	void SmallLeftRotate(AVL<T> *node)
+	void SmallLeftRotate(AVL<T> *&node)
 	{
-		AVL<T> *helpNode = node->RightChild;
-		node->RightChild = helpNode->LeftChild;
-		helpNode->LeftChild = node;
+		AVL<T> *help = node->RightChild;
+		node->RightChild = help->LeftChild;
+		help->Parent = node->RightChild;
+		node->Parent = node->Parent->Parent;
+		help->LeftChild = node;
 		RecountHeights(node);
-		RecountHeights(helpNode);
+		RecountHeights(help);
 	}
-
 	void SmallRightRotate(AVL<T> *node)
 	{
-		AVL<T> *helpNode = node->LeftChild;
-		node->LeftChild = helpNode->RightChild;
-		helpNode->RightChild = node;
+		AVL<T> *help = node->LeftChild;
+		/*node->LeftChild = help->RightChild;
+		help->Parent = node;
+		help->RightChild = node;*/
+		node->LeftChild = help->RightChild;
+		help->Parent = node->Parent;
+		help->RightChild = node;
+		node->Parent = help;
+		help->Parent->RightChild = help;
 		RecountHeights(node);
-		RecountHeights(helpNode);
+		RecountHeights(help);
 	}
 
 	void BigRightRotate(AVL<T> *node)
@@ -238,7 +277,7 @@ public:
 		SmallLeftRotate(node);
 	}
 
-	void RemovingNode(AVL<T> *current)
+	void RemovingNode(AVL<T> *&current)
 	{
 		if (!current->LeftChild && !current->RightChild)
 		{
@@ -246,7 +285,8 @@ public:
 				current->Parent->LeftChild = nullptr;
 			else
 				current->Parent->RightChild = nullptr;
-			RecountHeights(current->Parent);
+
+			CheckTreeCorrectness(current->Parent);
 			delete current;
 		}
 		else if (current->LeftChild && current->RightChild)
@@ -266,7 +306,7 @@ public:
 				current->Parent->RightChild = current->RightChild;
 			}
 			current->RightChild->Parent = current->Parent;
-			RecountHeights(current->Parent);
+			CheckTreeCorrectness(current->Parent);
 		}
 		else
 		{
@@ -278,9 +318,10 @@ public:
 			{
 				current->Parent->RightChild = current->LeftChild;
 			}
-			RecountHeights(current->Parent);
+			CheckTreeCorrectness(current->Parent);
 			current->LeftChild->Parent = current->Parent;
 		}
+		
 	}
 
 	AVL<T>* FindParentPosition(AVL<T> *node , AVL<T> *prevNode, const T &val)
@@ -415,12 +456,6 @@ int main()
 	BST<int> bst;
 	std::vector<int> vect = { 1, 7, 6, 0, 10, 3 };
 	bst.Assign(vect.begin(), vect.end());
-	bst.ShowTree(bst.GetRoot());
-	bst.Remove(bst.GetRoot()->Value);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());
-	bst.Remove(3);
-	std::cout << "!!!!\r\n";
 	bst.ShowTree(bst.GetRoot());
 	/*bst.Remove(6);
 	std::cout << "!!!!\r\n";
