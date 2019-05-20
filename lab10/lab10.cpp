@@ -4,6 +4,9 @@
 #include <algorithm>
 
 template<class T>
+class iterator;
+
+template<class T>
 struct AVL
 {
 	T Value;
@@ -54,6 +57,7 @@ struct AVL
 template<class T, class Compare = std::less<T>>
 class BST
 {
+	friend class iterator<T>;
 private:
 	size_t nodeCount, dataSize;
 	AVL<T> *root;
@@ -90,6 +94,15 @@ public:
 		return nodeCount;
 	}
 
+	iterator<T> begin()
+	{
+		return iterator<T>(FindMin(root));
+	}
+
+	iterator<T> end()
+	{
+		return iterator<T>(FindMax(root));
+	}
 	template<class InputIterator>
 	void Assign(InputIterator first, InputIterator last)
 	{
@@ -129,11 +142,6 @@ public:
 		return;
 	}
 
-	T FindMin()
-	{
-
-	}
-
 	void Insertion(AVL<T> *parent, const T &val)
 	{
 		AVL<T> *newNode = new AVL<T>(nullptr, nullptr, parent, val);
@@ -156,6 +164,24 @@ public:
 		else
 			node->Height = std::max(node->LeftChild ? node->LeftChild->Height : 0, node->RightChild ? node->RightChild->Height : 0) + 1;
 		RecountHeights(node->Parent);
+	}
+
+	AVL<T>* FindMin(AVL<T> *node)
+	{
+		while (node->LeftChild)
+		{
+			node = node->LeftChild;
+		}
+		return node;
+	}
+
+	AVL<T>* FindMax(AVL<T> *node)
+	{
+		while (node->RightChild)
+		{
+			node = node->RightChild;
+		}
+		return node;
 	}
 
 	void Remove(const T &val)
@@ -196,7 +222,7 @@ public:
 		}
 		else
 		{
-			AVL<T> *newRoot = FindMaximum(root);
+			AVL<T> *newRoot = FindMaximumForSwap(root);
 			Swap(root, newRoot);
 			RemovingNode(newRoot);
 		}
@@ -300,7 +326,7 @@ public:
 		}
 		else if (current->LeftChild && current->RightChild)
 		{
-			AVL<T> *swapNode = FindMaximum(current);
+			AVL<T> *swapNode = FindMaximumForSwap(current);
 			Swap(current, swapNode);
 			RemovingNode(swapNode);
 		}
@@ -343,7 +369,7 @@ public:
 			return FindParentPosition(node->LeftChild, node, val);
 	}
 
-	AVL<T>* FindMaximum(AVL<T> *node)
+	AVL<T>* FindMaximumForSwap(AVL<T> *node)
 	{
 		if (node->LeftChild)
 			node = node->LeftChild;
@@ -403,26 +429,21 @@ class iterator
 {
 	friend class BST<T>;
 public:
-	BST<T> *bst;
-	iterator(BST<T> *bstTree)
+	AVL<T> *currentNode;
+	iterator(AVL<T> *node)
 	{
-		bst = bstTree;
+		currentNode = node;
 	}
-	iterator begin()
-	{
 
-	}
-	iterator end()
-	{
-
-	}
 	iterator operator++()
 	{
 
 	}
 	iterator operator++(T)
 	{
-
+		auto tmp = *this;
+		++(*this);
+		return tmp;
 	}
 	iterator operator--()
 	{
@@ -430,11 +451,13 @@ public:
 	}
 	iterator operator--(T)
 	{
-
+		auto tmp = *this;
+		--(*this);
+		return tmp;
 	}
 	T operator*()
 	{
-
+		return currentNode->Value;
 	}
 	bool operator==(const iterator &iter2)
 	{
@@ -458,4 +481,8 @@ int main()
 	bst.Remove(bst.GetRoot()->Value);
 	std::cout << "\r\n";
 	bst.ShowTree(bst.GetRoot());
+	std::cout << "\r\n";
+	std::cout << *(bst.begin());
+	std::cout << "\r\n";
+	std::cout << *(bst.end());
 }
