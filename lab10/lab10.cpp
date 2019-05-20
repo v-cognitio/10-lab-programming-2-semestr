@@ -1,7 +1,10 @@
 #include "pch.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
+template<class T>
+class iterator;
 
 template<class T>
 struct AVL
@@ -10,6 +13,7 @@ struct AVL
 	AVL *LeftChild;
 	AVL *RightChild;
 	AVL *Parent;
+	int Height;
 
 	AVL(AVL<T> *LChild, AVL<T> *RChild, AVL<T> *Par, T val)
 	{
@@ -17,6 +21,7 @@ struct AVL
 		RightChild = RChild;
 		Parent = Par;
 		Value = val;
+		Height = 1;
 	}
 
 	AVL(const AVL &avl)
@@ -25,6 +30,7 @@ struct AVL
 		RightChild = avl.RightChild;
 		Value = avl.Value;
 		Parent = avl.Parent;
+		Height = avl.Height;
 	}
 
 	AVL& operator=(const AVL &avl)
@@ -41,7 +47,8 @@ struct AVL
 		}
 		LeftChild = avl.LeftChild;
 		RightChild = avl.RightChild;
-		//maybe avl should be deleted after that 
+		Height = avl.Height;
+		delete avl;
 		return *this;
 	}
 
@@ -50,6 +57,7 @@ struct AVL
 template<class T, class Compare = std::less<T>>
 class BST
 {
+	friend class iterator<T>;
 private:
 	size_t nodeCount, dataSize;
 	AVL<T> *root;
@@ -66,7 +74,7 @@ public:
 		treeData[1] = nullptr;
 	}
 
-	BST(const BST &) : BST()
+	BST(const BST &otherBst) : BST()
 	{
 
 	}
@@ -86,6 +94,15 @@ public:
 		return nodeCount;
 	}
 
+	iterator<T> begin()
+	{
+		return iterator<T>(FindMin(root));
+	}
+
+	iterator<T> end()
+	{
+		return iterator<T>(FindMax(root));
+	}
 	template<class InputIterator>
 	void Assign(InputIterator first, InputIterator last)
 	{
@@ -134,10 +151,40 @@ public:
 		else
 			parent->LeftChild = newNode;
 
-		AddNode(newNode);
+		RecountHeights(newNode->Parent);
+		CheckTreeCorrectness(newNode->Parent);
 	}
 
-	void Remove(const T &val)// Не работает
+	void RecountHeights(AVL<T> *node)
+	{
+		if (!node)
+			return;
+		if (!node->LeftChild && !node->RightChild)
+			node->Height = 1;
+		else
+			node->Height = std::max(node->LeftChild ? node->LeftChild->Height : 0, node->RightChild ? node->RightChild->Height : 0) + 1;
+		RecountHeights(node->Parent);
+	}
+
+	AVL<T>* FindMin(AVL<T> *node)
+	{
+		while (node->LeftChild)
+		{
+			node = node->LeftChild;
+		}
+		return node;
+	}
+
+	AVL<T>* FindMax(AVL<T> *node)
+	{
+		while (node->RightChild)
+		{
+			node = node->RightChild;
+		}
+		return node;
+	}
+
+	void Remove(const T &val)
 	{
 		AVL<T> *position = FindParentPosition(root, root, val);
 		if (position == root && position->Value == val)
@@ -151,7 +198,6 @@ public:
 				current = position->LeftChild;
 			else
 				current = position->RightChild;
-
 			RemovingNode(current);
 		}
 	}
@@ -161,13 +207,112 @@ public:
 		if (!root->LeftChild && !root->RightChild)
 			throw new std::exception;
 		if (!root->LeftChild)
+		{
+			root->RightChild->Parent = nullptr;
 			root = root->RightChild;
-		AVL<T> *newRoot = FindMaximum(root);
-		Swap(root, newRoot);
-		root = newRoot;
+			RecountHeights(root);
+			CheckTreeCorrectness(root);
+		}
+		else if(!root->RightChild)
+		{
+			root->LeftChild->Parent = nullptr;
+			root = root->LeftChild;
+			RecountHeights(root);
+			CheckTreeCorrectness(root);
+		}
+		else
+		{
+			AVL<T> *newRoot = FindMaximumForSwap(root);
+			Swap(root, newRoot);
+			RemovingNode(newRoot);
+		}
+		
 	}
 
-	void RemovingNode(AVL<T> *current)
+
+	void CheckTreeCorrectness(AVL<T> *node)
+	{
+		if (!node)
+			return;
+		int heightDiff = GetHeightDifference(node);
+
+		if (std::abs(heightDiff) > 1)
+		{
+			if (heightDiff > 0)
+			{
+				if (GetHeightDifference(root->RightChild) == -1)
+				{
+					BigLeftRotate(root);
+				}
+				else
+				{
+					SmallLeftRotate(root);
+				}
+			}
+			else
+			{
+				if (GetHeightDifference(root->LeftChild) == 1)
+				{
+					BigRightRotate(root);
+				}
+				else
+				{
+					SmallRightRotate(root);
+				}
+			}
+			return;
+		}
+		CheckTreeCorrectness(node->Parent);
+	}
+
+	int GetHeightDifference(AVL<T> *node)
+	{
+		if (!node)
+			return 0;
+		return (node->RightChild ? node->RightChild->Height : 0) - (node->LeftChild ? node->LeftChild->Height : 0);
+	}
+
+	void SmallLeftRotate(AVL<T> *&node)
+	{
+		AVL<T> *help = node->RightChild;
+		node->RightChild = help->LeftChild;
+		help->Parent = node->Parent;
+		help->LeftChild = node;
+		node->Parent = help;
+		if(help->Parent)
+			help->Parent->LeftChild = help;
+		RecountHeights(node);
+		RecountHeights(help);
+		node = help;
+	}
+
+	void SmallRightRotate(AVL<T> *&node)
+	{
+		AVL<T> *help = node->LeftChild;
+		node->LeftChild = help->RightChild;
+		help->Parent = node->Parent;
+		help->RightChild = node;
+		node->Parent = help;
+		if(help->Parent)
+			help->Parent->RightChild = help;
+		RecountHeights(node);
+		RecountHeights(help);
+		node = help;
+	}
+
+	void BigRightRotate(AVL<T> *&node)
+	{
+		SmallLeftRotate(node->LeftChild);
+		SmallRightRotate(node);
+	}
+
+	void BigLeftRotate(AVL<T> *&node)
+	{
+		SmallRightRotate(node->RightChild);
+		SmallLeftRotate(node);
+	}
+
+	void RemovingNode(AVL<T> *&current)
 	{
 		if (!current->LeftChild && !current->RightChild)
 		{
@@ -175,11 +320,43 @@ public:
 				current->Parent->LeftChild = nullptr;
 			else
 				current->Parent->RightChild = nullptr;
+
+			CheckTreeCorrectness(current->Parent);
 			delete current;
 		}
+		else if (current->LeftChild && current->RightChild)
+		{
+			AVL<T> *swapNode = FindMaximumForSwap(current);
+			Swap(current, swapNode);
+			RemovingNode(swapNode);
+		}
+		else if (current->RightChild)
+		{
+			if (IsItLeftChild(current, current->Parent))
+			{
+				current->Parent->LeftChild = current->RightChild;
+			}
+			else
+			{
+				current->Parent->RightChild = current->RightChild;
+			}
+			current->RightChild->Parent = current->Parent;
+			CheckTreeCorrectness(current->Parent);
+		}
 		else
-			Swap(current, FindMaximum(current));
-		Remove(current->Value);
+		{
+			if (IsItLeftChild(current, current->Parent))
+			{
+				current->Parent->LeftChild = current->LeftChild;
+			}
+			else
+			{
+				current->Parent->RightChild = current->LeftChild;
+			}
+			CheckTreeCorrectness(current->Parent);
+			current->LeftChild->Parent = current->Parent;
+		}
+		
 	}
 
 	AVL<T>* FindParentPosition(AVL<T> *node , AVL<T> *prevNode, const T &val)
@@ -192,10 +369,12 @@ public:
 			return FindParentPosition(node->LeftChild, node, val);
 	}
 
-	AVL<T>* FindMaximum(AVL<T> *node)
+	AVL<T>* FindMaximumForSwap(AVL<T> *node)
 	{
-		if(node->LeftChild)
+		if (node->LeftChild)
 			node = node->LeftChild;
+		else
+			return node = node->RightChild;
 		while (node->RightChild != nullptr)
 		{
 			node = node->RightChild;
@@ -219,20 +398,6 @@ public:
 			return false;
 	}
 
-	void AddNode(AVL<T> *node)
-	{
-		AVL<T> **helpData = new AVL<T>*[++dataSize];
-		int i = 0;
-		for (i ; i < dataSize - 2; i++)
-		{
-			helpData[i] = treeData[i];
-		}
-		helpData[i] = node;
-		helpData[++i] = nullptr;
-		delete[] treeData;
-		treeData = helpData;
-	}
-
 	bool IsItLeftChild(AVL<T> *child, AVL<T> *parent)
 	{
 		if (child->Parent->LeftChild == child)
@@ -247,7 +412,7 @@ public:
 	{
 		if (node != nullptr)
 		{
-			std::cout << node->Value << std::endl;
+			std::cout << node->Value << " Height : " << node->Height << std::endl;
 			ShowTree(node->LeftChild);
 			ShowTree(node->RightChild);
 		}
@@ -259,19 +424,65 @@ public:
 	}
 };
 
+template<class T>
+class iterator
+{
+	friend class BST<T>;
+public:
+	AVL<T> *currentNode;
+	iterator(AVL<T> *node)
+	{
+		currentNode = node;
+	}
+
+	iterator operator++()
+	{
+
+	}
+	iterator operator++(T)
+	{
+		auto tmp = *this;
+		++(*this);
+		return tmp;
+	}
+	iterator operator--()
+	{
+
+	}
+	iterator operator--(T)
+	{
+		auto tmp = *this;
+		--(*this);
+		return tmp;
+	}
+	T operator*()
+	{
+		return currentNode->Value;
+	}
+	bool operator==(const iterator &iter2)
+	{
+
+	}
+	bool operator!=(const iterator &iter2)
+	{
+
+	}
+};
+
 int main()
 {
 	BST<int> bst;
 	std::vector<int> vect = { 1, 7, 6, 0, 10, 3 };
 	bst.Assign(vect.begin(), vect.end());
 	bst.ShowTree(bst.GetRoot());
-	/*bst.Remove(6);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());
 	bst.Remove(3);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());*/
-	bst.Remove(7);
-	std::cout << "!!!!\r\n";
+	std::cout << "\r\n";
 	bst.ShowTree(bst.GetRoot());
+	bst.Remove(bst.GetRoot()->Value);
+	std::cout << "\r\n";
+	bst.ShowTree(bst.GetRoot());
+	std::cout << "\r\n";
+	std::cout << *(bst.begin());
+	std::cout << "\r\n";
+	std::cout << *(bst.end());
 }
