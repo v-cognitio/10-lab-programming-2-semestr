@@ -129,6 +129,11 @@ public:
 		return;
 	}
 
+	T FindMin()
+	{
+
+	}
+
 	void Insertion(AVL<T> *parent, const T &val)
 	{
 		AVL<T> *newNode = new AVL<T>(nullptr, nullptr, parent, val);
@@ -138,7 +143,6 @@ public:
 		else
 			parent->LeftChild = newNode;
 
-		AddNode(newNode);
 		RecountHeights(newNode->Parent);
 		CheckTreeCorrectness(newNode->Parent);
 	}
@@ -181,12 +185,14 @@ public:
 			root->RightChild->Parent = nullptr;
 			root = root->RightChild;
 			RecountHeights(root);
+			CheckTreeCorrectness(root);
 		}
 		else if(!root->RightChild)
 		{
 			root->LeftChild->Parent = nullptr;
 			root = root->LeftChild;
 			RecountHeights(root);
+			CheckTreeCorrectness(root);
 		}
 		else
 		{
@@ -197,11 +203,11 @@ public:
 		
 	}
 
+
 	void CheckTreeCorrectness(AVL<T> *node)
 	{
 		if (!node)
 			return;
-		RecountHeights(node);
 		int heightDiff = GetHeightDifference(node);
 
 		if (std::abs(heightDiff) > 1)
@@ -366,20 +372,6 @@ public:
 			return false;
 	}
 
-	void AddNode(AVL<T> *node)
-	{
-		AVL<T> **helpData = new AVL<T>*[++dataSize];
-		int i = 0;
-		for (i ; i < dataSize - 2; i++)
-		{
-			helpData[i] = treeData[i];
-		}
-		helpData[i] = node;
-		helpData[++i] = nullptr;
-		delete[] treeData;
-		treeData = helpData;
-	}
-
 	bool IsItLeftChild(AVL<T> *child, AVL<T> *parent)
 	{
 		if (child->Parent->LeftChild == child)
@@ -460,22 +452,10 @@ int main()
 	std::vector<int> vect = { 1, 7, 6, 0, 10, 3 };
 	bst.Assign(vect.begin(), vect.end());
 	bst.ShowTree(bst.GetRoot());
-	/*bst.Remove(6);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());
 	bst.Remove(3);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());
-	bst.Remove(7);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());
-	bst.Remove(10);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());
-	bst.Remove(0);
-	std::cout << "!!!!\r\n";
+	std::cout << "\r\n";
 	bst.ShowTree(bst.GetRoot());
 	bst.Remove(bst.GetRoot()->Value);
-	std::cout << "!!!!\r\n";
-	bst.ShowTree(bst.GetRoot());*/
+	std::cout << "\r\n";
+	bst.ShowTree(bst.GetRoot());
 }
